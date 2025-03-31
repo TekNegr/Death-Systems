@@ -5,68 +5,52 @@ namespace App\Livewire;
 use Livewire\Component;
 use Livewire\WithPersistence;
 use Livewire\Attributes\On;
+use App\Livewire\Window;
+use Illuminate\Support\Str;
 
 class Desktop extends Component
 {
 
-
-    public $listeners = ['windowClosed' => 'closeWindow']; // Listen for closeWindow event
-
-    public array $closedWindows = [];
-    public $windows = []; // Array to track opened windows
-    public $apps = [ // Dictionary of all possible apps
-        'dashboard' => [
-            'title' => 'Dashboard',
-            'view' => 'windows.dashboard',
-        ],
-        'settings' => [
-            'title' => 'Settings',
-            'view' => 'windows.settings',
-        ],
-        'profile' => [
-            'title' => 'Profile',
-            'view' => 'windows.ds-profile',
-        ],
-    ];
+    public array $windows = [];
+    public int $zCounter = 1;
 
     public function mount()
     {
-        $this->openWindow('profile'); // Open the dashboard by defaul
+        $this->openWindow('Terminal'); // Open the dashboard by defaul
     }
 
-    
-    public function openWindow($appKey)
+    #[On('call-window')]
+    public function openWindow(string $name, array $params = [])
     {
-        if (isset($this->apps[$appKey])) {
-            $app = $this->apps[$appKey];
-
-            // Add a new window to the list
-            $this->windows[] = [
-                'id' => uniqid(), // Unique ID for the window
-                'title' => $app['title'],
-                'view' => $app['view'],
-                'visible' => true,
-            ];
-            // session()->put('windows', $this->windows);
-        } else {
-            // Handle the case where the app is not found
-            session()->flash('error', 'App not found.');
+        // Check if the window is already open
+        foreach ($this->windows as $window) {
+            if ($window['name'] === $name) {
+                // Bring the window to the front
+                $window['zIndex'] = $this->zCounter++;
+                return;
+            }
         }
+
+        // If not, create a new window
+        $this->windows[] = [
+            'id' => Str::uuid()->toString(),
+            'name' => $name,
+            'params' => $params,
+            'zIndex' => $this->zCounter++,
+            'x' => 150,
+            'y' => 150,
+            'width' => 600,
+            'height' => 400,
+        ];  
     }
     
     #[On('closeWindow')]
     public function closeWindow($id)
     {
-        // This function will be changed due to impossibility of closing windows
-
-       echo "Closing window with ID: $id";
-        // Find the window by ID and set its visibility to false
-        foreach ($this->windows as $key => $window) {
-            if ($window['id'] === $id) {
-                unset($this->windows[$key]);
-                break;
-            }
-        }
+        // Find the window by ID and remove it from the array
+        $this->windows = array_filter($this->windows, function ($window) use ($id) {
+            return $window['id'] !== $id;
+        });
     }
 
     public function render()

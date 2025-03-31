@@ -7,41 +7,31 @@ use App\Livewire\Desktop;
 
 class Window extends Component
 {
-    public $id;
-    public $title = 'Window';
-    public $width = 400;
-    public $height = 200;
-    public $x = 0, $y = 0;
-    public $dragging = false;
-    public $resizing = false;
-    public $resizer = '';
-    public $minWidth = 200;
-    public $minHeight = 200;
-    public $maxWidth = 800;
-    public $maxHeight = 600;
-    public $minX = 0;
-    public $minY = 0;
-    public $maxX = 0; // Define later
-    public $maxY = 0; // Define later
-    public $view = 'default-view'; // Default view to render inside the window
-    public $visible = true;
+    public array $window;
     
+    
+    public function mount(array $window)
+    {
+        $this->window = $window;
+    }
+    
+    public function closeSelf()
+    {
+        $this->dispatch('closeWindow', id: $this->window['id'] ); 
+    }
+
+
     public function render()
     {
+        $componentName = 'apps.' . strtolower($this->window['name'] ?? 'default');
+        if (!class_exists('App\\Livewire\\Apps\\' . ucfirst($this->window['name']))) {
+            return view('livewire.window', [
+                'error' => "Component '{$componentName}' not found.",
+            ]);
+        }
+    
         return view('livewire.window', [
-            'viewContent' => view($this->view)->render()
+            'componentName' => $componentName,
         ]);
-    }
-
-    public function openWindow($view)
-    {
-        $this->$view = $view;
-        $this->visible = true;
-    }
-
-    public function closeWindow()
-    {
-        $this->visible = false;
-        $this->emit('windowClosed', $this->id); // Emit an event to notify the parent component
     }
 }

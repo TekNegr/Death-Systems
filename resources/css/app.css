@@ -3,6 +3,7 @@
 @tailwind utilities;
 
 
+/* Fenetres general */
 .window {
     width: 400px;
     min-width: 200px; /* Minimum width for resizing */
@@ -125,4 +126,47 @@
 .window-content {
     padding: 10px;
     color:black
+}
+
+
+/* TERMINAL  */
+
+@font-face {
+    font-family: 'DeathStarFont';
+    src: url('/fonts/GlitchGoblin.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+.terminal {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.terminal .output {
+    height: 100%;
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem;
+    background-color: #000;
+    
+}
+
+.terminal .input {
+    background-color: #222;
+    padding: 0.5rem;
+}
+
+.terminal .input input {
+    width: 100%;
+    background-color: #000;
+    border: none;
+    outline: none;
+    padding: 0.5rem;
+    
+}
+
+.terminal .ds-mode {
+    font-family: 'DeathStarFont', monospace !important; /* Ensure DS-mode font is applied */
 }
