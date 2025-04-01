@@ -14,11 +14,13 @@ class Terminal extends Component
     public array $history = [];
     public bool $dsMode ; 
     public string $input = '';
+    public AIController $aiController;
 
     public function mount(array $params = [])
     {
+        
         $this->params = $params;
-
+        // $this->aiController = app(AIController::class);
         // Initialize DS-mode if passed in params
         $this->dsMode = $params['dsMode'] ?? false;
 
@@ -28,6 +30,7 @@ class Terminal extends Component
         // If DS-mode is active, add a special message
         if ($this->dsMode) {
             $this->history[] = 'Kneel before DEATHSTAR.';
+            app(AIController::class)->startMessage();
         }
     }
 
@@ -40,14 +43,14 @@ class Terminal extends Component
 
 
         // Add the command to the history
-        $this->history[] = ['from' => 'user', 'content' => $command];
+        $this->history[] = "> $command";
         // Handle the command (for now, just echo it back)
         $response = $this->handleCommand($command);
         $this->history[] = $response;
 
         // Clear the input field
         $command = '';
-        $this->reset('command');
+        // $this->reset('command');
 
         // Scroll to the bottom of the output area
         $this->dispatch('scroll-terminal');
@@ -58,12 +61,20 @@ class Terminal extends Component
         if ($this->dsMode) {
             if ($command === 'exit') {
                 $this->dsMode = false; // Exit DS-mode
-                $aiController = new AIController();
                 return $this->aiController->endMessage();
             }
-            return $this->handleDSModeCommand($command);
+            return app(AIController::class)->getResponse($command);
         }
+
+        
+        return $this->processComand($command);
+        
         // Placeholder for chatbot or command handling logic
+        
+    }
+    
+    public function processComand(string $command): string
+    {
         switch (strtolower($command)) {
             case 'help':
                 return 'Available commands: help, clear, exit, open-*, summon-DS';
@@ -74,15 +85,11 @@ class Terminal extends Component
                 $this->dispatch('close-terminal');
                 return 'Exiting terminal...';
             case 'summon-ds':
+                // Start the AI conversation
                 $this->history = [];
                 $this->dsMode = true;
                 
-                // Start the AI conversation
-                $aiController = new AIController();
-                $initialResponse = $aiController->startMessage();
-                $this->history[] = $initialResponse;
-
-                return '';
+                return app(AIController::class)->startMessage();;
                     
             default:
                 if (str_starts_with($command, 'open-')) {
@@ -93,13 +100,8 @@ class Terminal extends Component
                 return "Unknown command: {$command}";
         }
     }
+
     
-    protected function handleDSModeCommand(string $command): string
-    {
-        // Call the AIController to get a response
-        $aiController = new AIController();
-        return $aiController->getResponse($command);
-    }
 
     public function render()
     {

@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Log;
 
 class AIController extends Controller
 {
+    public $fastApiUrl = 'http://127.0.0.1:5000/chat';
+
     public function startMessage(): string
     {
         return "Who dares summon me?";
@@ -18,14 +20,12 @@ class AIController extends Controller
         // $message = $request->input('message');
 
     try {
-        $response = Http::timeout(10)->post('http://127.0.0.1:8000/chat', [
-            // 'message' => $message,
+        $response = Http::timeout(10)->post($this->fastApiUrl, [
+            'message' => $request,
         ]);
 
         if ($response->successful()) {
-            return response()->json([
-                'ai_response' => $response->json()['response']
-            ]);
+            return $response->json()['response'];
         } else {
             return response()->json(['error' => 'Erreur API'], 500);
         }
