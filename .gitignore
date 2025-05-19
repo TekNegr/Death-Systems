@@ -1,4 +1,4 @@
-/.phpunit.cache
+.phpunit.cache
 /node_modules
 /public/build
 /public/hot
@@ -22,3 +22,4 @@ yarn-error.log
 /.vscode
 /.zed
 /scripts/trained_model
+venv/
