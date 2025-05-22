@@ -1,0 +1,14 @@
+fastapi
+uvicorn
+numpy
+pydantic
+pandas
+torch
+transformers
+scikit-learn
+scipy
+matplotlib
+seaborn
+typing
+accelerate>=0.26.0
+datasets
