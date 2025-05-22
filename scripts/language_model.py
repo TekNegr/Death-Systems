@@ -2,36 +2,61 @@ import os
 from typing import List
 from transformers import GPT2LMHeadModel, GPT2Tokenizer, DataCollatorForLanguageModeling, Trainer, TrainingArguments
 from datasets import load_dataset
+import logging
 
 class SimpleLanguageModel:
-    def __init__(self, model_name: str = "gpt2", model_dir: str = "./model"):
+    def __init__(self, model_name: str = "gpt2", model_dir: str = "./model", identity_file: str = "identity.txt"):
         self.model_name = model_name
         self.model_dir = model_dir
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        self.identity_file = os.path.abspath(os.path.join(base_dir, identity_file))
         self.tokenizer = GPT2Tokenizer.from_pretrained(model_name)
-        # Add pad token if not present
         if self.tokenizer.pad_token is None:
             self.tokenizer.add_special_tokens({'pad_token': '[PAD]'})
         self.pretrained_model = GPT2LMHeadModel.from_pretrained(model_name)
-        # Resize model embeddings to accommodate new tokens
         self.pretrained_model.resize_token_embeddings(len(self.tokenizer))
         self.trained_model = None
-        self.model = self.pretrained_model  # Current model in use
+        self.model = self.pretrained_model
+        # Attempt to load existing trained model if present
+        trained_model_path = os.path.abspath(os.path.join(base_dir, "trained_model"))
+        logging.info(f"Looking for trained model at {trained_model_path}")
+        if os.path.exists(trained_model_path):
+            try:
+                self.trained_model = GPT2LMHeadModel.from_pretrained(trained_model_path)
+                self.trained_model.resize_token_embeddings(len(self.tokenizer))
+                self.model = self.trained_model
+                logging.info(f"Loaded existing trained model from {trained_model_path}")
+            except Exception as e:
+                logging.error(f"Failed to load existing trained model: {e}")
+        else:
+            logging.info("No existing trained model found. Using pretrained model.")
+            
+            
+    def _read_identity(self) -> str:
+        if os.path.exists(self.identity_file):
+            with open(self.identity_file, "r", encoding="utf-8") as f:
+                return f.read().strip()
+        else:
+            return "You are death_instance_v0.1, a helpful AI assistant."
 
     def train(self, train_file: str, output_dir: str = None, epochs: int = 3, batch_size: int = 4):
         import os
         if output_dir is None:
-            output_dir = "./scripts/trained_model"
-        # Convert output_dir to absolute path based on this file's directory
+            output_dir = "trained_model"
         base_dir = os.path.dirname(os.path.abspath(__file__))
-        output_dir = os.path.abspath(os.path.join(base_dir, output_dir)) if not os.path.isabs(output_dir) else output_dir
+        if os.path.isabs(output_dir):
+            abs_output_dir = output_dir
+        else:
+            if output_dir.startswith("scripts/"):
+                output_dir = output_dir[len("scripts/"):]
+            abs_output_dir = os.path.abspath(os.path.join(base_dir, output_dir))
 
-        print(f"Saving model to absolute path: {output_dir}")
+        print(f"Saving model to absolute path: {abs_output_dir}")
 
-        # Load dataset using Huggingface Datasets library
         dataset = load_dataset("text", data_files={"train": train_file})
         
         def tokenize_function(examples):
-            return self.tokenizer(examples["text"], truncation=True, max_length=128)
+            return self.tokenizer(examples["text"], truncation=True, max_length=128, padding="max_length")
 
         tokenized_datasets = dataset.map(tokenize_function, batched=True, remove_columns=["text"])
 
@@ -39,16 +64,15 @@ class SimpleLanguageModel:
             tokenizer=self.tokenizer, mlm=False,
         )
 
-        # Load existing model if available to continue training
-        if os.path.exists(output_dir):
-            print(f"Loading existing model from {output_dir} for continued training.")
-            model_to_train = GPT2LMHeadModel.from_pretrained(output_dir)
+        if os.path.exists(abs_output_dir):
+            print(f"Loading existing model from {abs_output_dir} for continued training.")
+            model_to_train = GPT2LMHeadModel.from_pretrained(abs_output_dir)
             model_to_train.resize_token_embeddings(len(self.tokenizer))
         else:
             model_to_train = self.pretrained_model
 
         training_args = TrainingArguments(
-            output_dir=output_dir,
+            output_dir=abs_output_dir,
             overwrite_output_dir=True,
             num_train_epochs=epochs,
             per_device_train_batch_size=batch_size,
@@ -66,12 +90,27 @@ class SimpleLanguageModel:
         )
 
         trainer.train()
-        # Ensure output directory exists before saving
-        os.makedirs(output_dir, exist_ok=True)
-        trainer.save_model(output_dir)
-        self.trained_model = GPT2LMHeadModel.from_pretrained(output_dir)
-        print(f"Model saved to: {output_dir}")
-        
+        os.makedirs(abs_output_dir, exist_ok=True)
+        trainer.save_model(abs_output_dir)
+        self.trained_model = GPT2LMHeadModel.from_pretrained(abs_output_dir)
+        print(f"Model saved to: {abs_output_dir}")
+
+    def selftrain(self, training_dialogs: List[str], output_dir: str = None, epochs: int = 3, batch_size: int = 4):
+        filtered_dialogs = [dialog for dialog in training_dialogs if dialog.strip()]
+        if not filtered_dialogs:
+            raise ValueError("Training dialogs list is empty or contains only empty strings. Cannot train on empty data.")
+
+        identity_prefix = self._read_identity() + "\\n"
+        with open("temp_training_data.txt", "w", encoding="utf-8") as f:
+            f.write(identity_prefix)
+            for dialog in filtered_dialogs:
+                dialog = dialog.strip()
+                if not dialog.endswith("\\n"):
+                    dialog += "\\n"
+                f.write(dialog)
+
+        self.train("temp_training_data.txt", output_dir=output_dir, epochs=epochs, batch_size=batch_size)
+
     def use_trained_model(self):
         if self.trained_model is not None:
             self.model = self.trained_model
@@ -81,62 +120,28 @@ class SimpleLanguageModel:
     def use_pretrained_model(self):
         self.model = self.pretrained_model
 
-    def generate_text(self, prompt: str, max_length: int = 100) -> str:
-        inputs = self.tokenizer.encode(prompt, return_tensors="pt")
-        outputs = self.model.generate(inputs, max_length=max_length, num_return_sequences=1)
-        return self.tokenizer.decode(outputs[0], skip_special_tokens=True)
-
-    def selftrain(self, training_dialogs: List[str], output_dir: str = None, epochs: int = 3, batch_size: int = 4):
-        """
-        Train the model on all records of TrainingDialog resource.
-        :param training_dialogs: List of dialog strings to train on.
-        """
-        # Filter out empty or whitespace-only dialogs
-        filtered_dialogs = [dialog for dialog in training_dialogs if dialog.strip()]
-        if not filtered_dialogs:
-            raise ValueError("Training dialogs list is empty or contains only empty strings. Cannot train on empty data.")
-
-        # Keep prefixes but ensure proper formatting with newlines between dialogs
-        formatted_dialogs = []
-        for dialog in filtered_dialogs:
-            dialog = dialog.strip()
-            # Ensure each dialog ends with a newline for separation
-            if not dialog.endswith("\\n"):
-                dialog += "\\n"
-            formatted_dialogs.append(dialog)
-
-        # Write formatted dialogs to a temporary training file
-        temp_train_file = "temp_training_data.txt"
-        with open(temp_train_file, "w", encoding="utf-8") as f:
-            for dialog in formatted_dialogs:
-                f.write(dialog)
-
-        self.train(temp_train_file, output_dir=output_dir, epochs=epochs, batch_size=batch_size)
-
-        # Remove temporary file
-        # os.remove(temp_train_file)
-
-    def interactivetrain(self, prompt: str, user_rating_callback, max_length: int = 100):
-        """
-        Interactive training session where user asks something, AI answers, user rates accuracy.
-        The dialog is stored via user_rating_callback.
-        :param prompt: User input prompt.
-        :param user_rating_callback: Function to call with (prompt, response, rating).
-        :param max_length: Max length of generated response.
-        :return: AI generated response.
-        """
-        response = self.generate_text(prompt, max_length=max_length)
-        print(f"AI response: {response}")
-        rating = user_rating_callback(prompt, response)
-        # Store dialog with rating (user_rating_callback should handle storage)
-        return response, rating
-
-if __name__ == "__main__":
-    # Example usage
-    lm = SimpleLanguageModel()
-    # To train: lm.train("path_to_training_text.txt")
-    # To switch to trained model: lm.use_trained_model()
-    # To switch back to pretrained model: lm.use_pretrained_model()
-    # To generate text:
-    prompt = "Dear Hiring Manager,"
-    print(lm.generate_text(prompt))
+    def generate_text(self, full_prompt: str, max_length: int = 100) -> str:
+        inputs = self.tokenizer(full_prompt, return_tensors="pt", padding=True)
+        input_ids = inputs["input_ids"]
+        attention_mask = inputs["attention_mask"]
+        outputs = self.model.generate(
+            input_ids=input_ids,
+            attention_mask=attention_mask,
+            max_length=max_length,
+            num_return_sequences=1,
+            temperature=0.7,
+            top_k=50,
+            top_p=0.95,
+            no_repeat_ngram_size=2,
+            do_sample=True,
+            eos_token_id=self.tokenizer.eos_token_id,
+            pad_token_id=self.tokenizer.pad_token_id,
+        )
+        generated_text = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
+        logging.info(f"Generated text: {generated_text}")
+        response = generated_text[len(full_prompt):].strip()
+        for stop_token in ["User:", "AI:"]:
+            idx = response.find(stop_token)
+            if idx != -1:
+                response = response[:idx].strip()
+        return response

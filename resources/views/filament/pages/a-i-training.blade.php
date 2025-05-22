@@ -8,23 +8,51 @@
             class="w-full border rounded p-2 text-gray-700"
         ></textarea>
 
-        <x-filament::button type="submit" color="primary">
-            Send
-        </x-filament::button>
-    </form>
-
-    @if ($aiResponse)
-        <x-filament::button
-                wire:click="saveDialog"
-                color="success"
-                {{-- :disabled="!$rating" --}}
-            >
-                Save
+        <div class="flex space-x-4 mt-2">
+            <x-filament::button type="submit" color="primary" class="flex-1">
+                Send
             </x-filament::button>
 
+            @if ($aiResponse)
+                <x-filament::button
+                    wire:click="saveDialog"
+                    color="success"
+                    class="flex-1"
+                >
+                    Save
+                </x-filament::button>
+            @endif
+        </div>
+    </form>
+
+    <div class="mt-6">
+        <label for="aiIdentity" class="block font-semibold mb-2">AI Identity:</label>
+        <textarea
+            wire:model.defer="aiIdentity"
+            id="aiIdentity"
+            rows="3"
+            class="w-full border rounded p-2 text-gray-700"
+            placeholder="Enter AI identity prompt"
+        ></textarea>
+        <x-filament::button wire:click="saveIdentity" color="secondary" class="mt-2">
+            Save AI Identity
+        </x-filament::button>
+    </div>
+
+    <div class="mt-6 flex items-center space-x-4">
+        <div>
+            <span class="font-semibold">Current Model:</span>
+            <span class="ml-2 text-blue-600 capitalize">{{ $currentModel }}</span>
+        </div>
+        <x-filament::button wire:click="toggleModel" color="secondary" size="sm">
+            Switch Model
+        </x-filament::button>
+    </div>
+
+    @if ($aiResponse)
         <x-filament::card class="mt-6">
             <h3 class="font-semibold mb-2">AI Response:</h3>
-            <p>{{ $aiResponse }}</p>
+            <p class="whitespace-pre-wrap">{{ $aiResponse }}</p>
 
             <div class="mt-4 flex items-center space-x-2">
                 <label for="rating" class="mb-0 block font-semibold">Rate the accuracy:</label>
@@ -41,7 +69,6 @@
                     <option value="4">4 - Very Good</option>
                     <option value="5">5 - Excellent</option>
                 </select>
-                
             </div>
 
             <div class="mt-4">
