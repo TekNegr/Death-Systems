@@ -17,11 +17,18 @@ use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use Illuminate\Support\Facades\Gate;
+use App\Http\Middleware\CheckAdminPanelAccess;
+use App\Filament\Widgets\DashboardBackButton;
 
 class AdminPanelProvider extends PanelProvider
 {
     public function panel(Panel $panel): Panel
     {
+        Gate::define('viewAdminPanel', function ($user) {
+            return $user->hasAnyRole(['DeathStar', 'Admin']);
+        });
+
         return $panel
             ->default()
             ->id('admin')
@@ -39,6 +46,7 @@ class AdminPanelProvider extends PanelProvider
             ->widgets([
                 Widgets\AccountWidget::class,
                 Widgets\FilamentInfoWidget::class,
+                DashboardBackButton::class,
             ])
             ->middleware([
                 EncryptCookies::class,
@@ -50,6 +58,7 @@ class AdminPanelProvider extends PanelProvider
                 SubstituteBindings::class,
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
+                CheckAdminPanelAccess::class,
             ])
             ->authMiddleware([
                 Authenticate::class,

@@ -5,43 +5,46 @@ namespace App\Filament\Widgets;
 use Filament\Widgets\Widget;
 use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 
 class TestConnection extends Widget
 {
     protected static string $view = 'filament.widgets.test-connection';
 
-    protected static ?string $pollingInterval = '5s';
+    public string $connectionStatus = 'unknown';
 
-    public ?bool $connectionStatus = null;
-
-    public function testConnection()
+    public function mount(): void
     {
-        Log::info('TestConnection - testConnection called');
+        $this->refreshStatus();
+    }
 
+    public function refreshStatus(): void
+    {
         try {
             $response = Http::get('http://uvicorn_ai:80/test-connection');
-            if ($response->successful()) {
-                $this->connectionStatus = true;
-                Notification::make()
-                    ->title('Success')
-                    ->body('Connection successful.')
-                    ->success()
-                    ->send();
+            if ($response->successful() && isset($response->json()['message']) && $response->json()['message'] === 'Python-Interface connected!') {
+                $this->connectionStatus = 'online';
             } else {
-                $this->connectionStatus = false;
-                Notification::make()
-                    ->title('Error')
-                    ->body('Connection failed.')
-                    ->danger()
-                    ->send();
+                $this->connectionStatus = 'offline';
             }
         } catch (\Exception $e) {
-            $this->connectionStatus = false;
-            Log::error('TestConnection - Exception during connection test: ' . $e->getMessage());
+            $this->connectionStatus = 'offline';
+        }
+    }
+
+    public function testConnection(): void
+    {
+        $this->refreshStatus();
+
+        if ($this->connectionStatus === 'online') {
             Notification::make()
-                ->title('Error')
-                ->body('Exception during connection test.')
+                ->title('Python service status')
+                ->body('Python service is online')
+                ->success()
+                ->send();
+        } else {
+            Notification::make()
+                ->title('Python service status')
+                ->body('Python service is offline')
                 ->danger()
                 ->send();
         }

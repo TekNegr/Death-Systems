@@ -112,7 +112,19 @@ services:
         command: /bin/sh -c "pip install -r requirements.txt && uvicorn ai_controller_interface:app --host 0.0.0.0 --port 80"
         networks:
           - sail
-
+          
+    phpmyadmin:
+        image: phpmyadmin/phpmyadmin
+        restart: always
+        ports:
+            - 8080:80
+        environment:
+            PMA_HOST: mysql
+            PMA_PORT: 3306
+        depends_on:
+            - mysql
+        networks:
+            - sail
 networks:
     sail:
         driver: bridge

@@ -26,6 +26,8 @@ return new class extends Migration
             $table->string('application_link')->nullable();
             $table->string('status')->default('open'); // open, closed, pending
             $table->string('category')->nullable(); // e.g., IT, Marketing, etc.
+            // lastApplicationDate 
+            $table->date('last_application_date')->nullable();
             $table->timestamps();
         });
     }

@@ -18,6 +18,7 @@ class TrainingDialogResource extends Resource
     protected static ?string $model = TrainingDialog::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationGroup = 'AI';
 
     public static function form(Form $form): Form
     {

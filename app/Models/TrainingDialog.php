@@ -12,19 +12,4 @@ class TrainingDialog extends Model
         'recovery_answer',
         'score',
     ];
-
-    public function getUserMessageAttribute($value)
-    {
-        return json_decode($value);
-    }
-
-    public function getAiResponseAttribute($value)
-    {
-        return json_decode($value);
-    }
-
-    public function getRecoveryAnswerAttribute($value)
-    {
-        return json_decode($value);
-    }
 }

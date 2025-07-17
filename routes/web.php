@@ -6,8 +6,16 @@ use App\Http\Controllers\InboundEmailController;
 use App\Http\Controllers\MailController;
 use App\Http\Controllers\AiController;
 
+use Illuminate\Support\Facades\Redirect;
+
+use Illuminate\Support\Facades\Auth;
+
 Route::get('/', function () {
-    return view('welcome');
+    if (Auth::check()) {
+        return redirect()->route('dashboard');
+    } else {
+        return redirect()->route('login');
+    }
 });
 
 Route::post('/ai/select-resource', [AiController::class, 'selectResource'])->name('ai.selectResource');
@@ -22,6 +30,6 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-Route::post('/inbound-email', [InboundEmailController::class, 'handle'])->name('inbound.email.handle');
+// Route::post('/inbound-email', [InboundEmailController::class, 'handle'])->name('inbound.email.handle');
 
 require __DIR__.'/auth.php';

@@ -11,10 +11,21 @@
                 </div>
 
                 <!-- Navigation Links -->
-                <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
+                <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex flex-1">
                     <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                         {{ __('Dashboard') }}
                     </x-nav-link>
+                    
+                    <livewire:app-button />
+                    
+                    
+                    <livewire:app-button />
+                    
+                    @can('viewAdminPanel')
+                    <x-nav-link :href="url('/admin')" :active="request()->is('admin*')">
+                        {{ __('Admin Panel') }}
+                    </x-nav-link>
+                    @endcan
                 </div>
             </div>
 
@@ -37,6 +48,12 @@
                         <x-dropdown-link :href="route('profile.edit')">
                             {{ __('Profile') }}
                         </x-dropdown-link>
+
+                        @can('viewAdminPanel')
+                        <x-dropdown-link :href="url('/admin')">
+                            {{ __('Admin Panel') }}
+                        </x-dropdown-link>
+                        @endcan
 
                         <!-- Authentication -->
                         <form method="POST" action="{{ route('logout') }}">
@@ -70,6 +87,11 @@
             <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                 {{ __('Dashboard') }}
             </x-responsive-nav-link>
+            @can('viewAdminPanel')
+            <x-responsive-nav-link :href="url('/admin')" :active="request()->is('admin*')">
+                {{ __('Admin Panel') }}
+            </x-responsive-nav-link>
+            @endcan
         </div>
 
         <!-- Responsive Settings Options -->
@@ -84,6 +106,12 @@
                     {{ __('Profile') }}
                 </x-responsive-nav-link>
 
+                @can('viewAdminPanel')
+                <x-responsive-nav-link :href="url('/admin')" :active="request()->is('admin*')">
+                    {{ __('Admin Panel') }}
+                </x-responsive-nav-link>
+                @endcan
+
                 <!-- Authentication -->
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
@@ -95,6 +123,6 @@
                     </x-responsive-nav-link>
                 </form>
             </div>
+            </div>
         </div>
-    </div>
 </nav>

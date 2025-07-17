@@ -13,6 +13,7 @@ class AITraining extends Page
     use WithPagination;
 
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
+    protected static ?string $navigationGroup = 'AI';
 
     protected static string $view = 'filament.pages.a-i-training';
 

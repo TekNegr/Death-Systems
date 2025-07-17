@@ -19,7 +19,10 @@ class CreateEntreprisesTable extends Migration
             $table->string('recipient_name')->nullable();
             $table->enum('recipient_gender', ['male', 'female', 'other'])->nullable();
             $table->string('email_to_apply')->unique();
-            $table->enum('work_domain', ['Developpement', 'Game Dev', 'Data & IA', 'Other'])->nullable();
+            $table->enum('work_domain', ['Developpement', 'Game Dev', 'AI', 'Other'])->nullable();
+            // lastApplicationDate
+            $table->date('last_application_date')->nullable();
+            $table->string('website')->nullable();
             $table->timestamps();
         });
     }

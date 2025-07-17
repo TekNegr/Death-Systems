@@ -8,6 +8,7 @@ use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Spatie\Permission\Models\Role;
 
 class UserResource extends Resource
 {
@@ -31,6 +32,13 @@ class UserResource extends Resource
                     ->password()
                     ->required()
                     ->maxLength(255),
+                Forms\Components\MultiSelect::make('roles')
+                    ->label('Roles')
+                    ->options(function () {
+                        return Role::all()->pluck('name', 'name')->toArray();
+                    })
+                    ->required()
+                    ->preload(),
             ]);
     }
 
