@@ -21,6 +21,52 @@ Laravel is a web application framework with expressive, elegant syntax. We belie
 
 Laravel is accessible, powerful, and provides tools required for large, robust applications.
 
+## Installation
+
+To set up this Laravel application using Sail (Laravel's Docker development environment), follow these steps:
+
+1. **Clone the repository:**
+   ```sh
+   git clone <repository-url>
+   cd <repository-folder>
+   ```
+
+2. **Copy the example environment file and install dependencies:**
+   ```sh
+   cp .env.example .env
+   ./vendor/bin/sail up -d
+   ```
+
+3. **Install Composer dependencies (if not already done):**
+   ```sh
+   ./vendor/bin/sail composer install
+   ```
+
+4. **Generate the application key:**
+   ```sh
+   ./vendor/bin/sail artisan key:generate
+   ```
+
+5. **Run database migrations:**
+   ```sh
+   ./vendor/bin/sail artisan migrate
+   ```
+
+6. **Access the application:**
+   - Visit [http://localhost](http://localhost) in your browser.
+
+### Installing Laravel Sail
+For Sails you will need to install WSL (Windows Subsystem Linux)
+If you don't have Sail installed, you can use it via Composer without a global install.  
+To install Sail as a dev dependency, run:
+
+```sh
+composer require laravel/sail --dev
+```
+
+For more details, see the [Laravel Sail documentation](https://laravel.com/docs/sail).
+
+
 ## Learning Laravel
 
 Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
